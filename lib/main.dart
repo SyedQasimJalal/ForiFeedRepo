@@ -1,7 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'home_page.dart'; // Import your Home Page
+import 'News_screen2.dart'; // Import your News Screen
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Fori Feed', // Add a title for your app
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: HomePage(), // Set HomePage as the home screen
+      home: NewsScreen2(), // Set NewsScreen as the home screen
     );
   }
 }
