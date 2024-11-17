@@ -30,7 +30,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.fori_feed" // Your app's package name
-        minSdk = flutter.minSdkVersion
+        minSdkVersion 23 // Set minSdkVersion to 23 explicitly
         targetSdk = flutter.targetSdkVersion
         versionCode = flutterVersionCode.toInteger()
         versionName = flutterVersionName
@@ -48,3 +48,4 @@ flutter {
 }
 
 // You don't need to apply the plugin again as it's already declared above
+apply plugin: 'com.google.gms.google-services'  // This line must be added

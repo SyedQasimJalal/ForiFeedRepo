@@ -1,25 +1,30 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'News_screen2.dart'; // Import your News Screen
+import 'package:fori_feed/News_screen2.dart';
+import 'Home_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase
-  // if (kIsWeb) {
-  //  await Firebase.initializeApp(
-  //  options: FirebaseOptions(
-  //  apiKey: "AIzaSyCnRMmBYSqackHMSq16Ny6SvJMEvorMGWg",
-  // appId: "1:577943125304:web:92d03779123c48434155cd",
-  // messagingSenderId: "577943125304",
-  // projectId: "flutterfori",
-  //  ),
-  // );
-  // } else {
-  // Initialize for mobile (Android/iOS)
-  // await Firebase.initializeApp();
-  // }
+  // Initialize Firebase for web and mobile
+  if (kIsWeb) {
+    // Web initialization
+    await Firebase.initializeApp(
+      options: FirebaseOptions(
+        apiKey: "AIzaSyCnRMmBYSqackHMSq16Ny6SvJMEvorMGWg",
+        appId: "1:577943125304:web:92d03779123c48434155cd",
+        messagingSenderId: "577943125304",
+        projectId: "flutterfori",
+        authDomain: "flutterfori.firebaseapp.com",  // Add the authDomain
+        storageBucket: "flutterfori.appspot.com",  // Add the storageBucket
+        databaseURL: "https://flutterfori.firebaseio.com",  // Add the databaseURL
+      ),
+    );
+  } else {
+    // Mobile initialization (uses google-services.json or GoogleService-Info.plist)
+    await Firebase.initializeApp();
+  }
 
   runApp(MyApp());
 }
@@ -30,9 +35,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Fori Feed', // Add a title for your app
+      title: 'Fori Feed', // App Title
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: NewsScreen2(), // Set NewsScreen as the home screen
+      home: NewsScreen2(), // Home screen after initialization
     );
   }
 }

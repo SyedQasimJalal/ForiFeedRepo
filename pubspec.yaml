@@ -21,6 +21,11 @@ dependencies:
   xml: ^6.5.0
   connectivity_plus: ^2.3.2
   flutter_html: ^3.0.0-beta.2
+  firebase_auth: ^5.1.2
+  cloud_firestore: ^5.2.1
+  firebase_database: ^11.1.6
+
+
 
 
 dev_dependencies:

@@ -4,6 +4,8 @@ import 'package:xml/xml.dart' as xml;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:html/parser.dart' as html_parser;
 import 'article_screen.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class NewsScreen2 extends StatefulWidget {
   @override
@@ -38,12 +40,13 @@ class _NewsScreenState extends State<NewsScreen2> with SingleTickerProviderState
       ),
     );
 
-    _textAnimation = Tween<Offset>(begin: Offset(-1.0, 0.0), end: Offset(0.0, 0.0)).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Interval(0.5, 1.0, curve: Curves.easeInOut),
-      ),
-    );
+    _textAnimation =
+        Tween<Offset>(begin: Offset(-1.0, 0.0), end: Offset(0.0, 0.0)).animate(
+          CurvedAnimation(
+            parent: _controller,
+            curve: Interval(0.5, 1.0, curve: Curves.easeInOut),
+          ),
+        );
 
     _danceAnimation = Tween<double>(begin: 0.9, end: 1.1).animate(
         CurvedAnimation(
@@ -66,9 +69,10 @@ class _NewsScreenState extends State<NewsScreen2> with SingleTickerProviderState
       'https://www.samaa.tv/feed/': 'Samaa',
       'https://arynews.tv/feed/': 'ARY News',
       'https://www.geo.tv/rss/1/53': 'Geo News',
-      'https://www.geo.tv/rss/1/1':'Geo News',
-      'https://www.geo.tv/rss/1/4':'Geo News',
-      'https://feeds.feedburner.com/geo/GiKR': 'Geo News', 'https://www.bolnews.com/feed/': 'Bol News',
+      'https://www.geo.tv/rss/1/1': 'Geo News',
+      'https://www.geo.tv/rss/1/4': 'Geo News',
+      'https://feeds.feedburner.com/geo/GiKR': 'Geo News',
+      'https://www.bolnews.com/feed/': 'Bol News',
       'http://feeds.bbci.co.uk/news/rss.xml': 'BBC News',
       'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml': 'The New York Times',
       'https://rss.cnn.com/rss/edition.rss': 'CNN',
@@ -80,7 +84,6 @@ class _NewsScreenState extends State<NewsScreen2> with SingleTickerProviderState
       'https://www.theguardian.com/world/rss': 'The Guardian',
       'https://www.bbc.com/news/10628494': 'BBC Top Stories',
       'https://www.huffpost.com/section/front-page/feed': 'HuffPost',
-      // Add other sources as needed
     };
 
     for (String url in rssSources.keys) {
@@ -91,15 +94,29 @@ class _NewsScreenState extends State<NewsScreen2> with SingleTickerProviderState
           final items = document.findAllElements('item');
 
           for (var item in items) {
-            final title = item.findElements('title').first.text;
-            final descriptionHtml = item.findElements('description').first.text;
-            final link = item.findElements('link').first.text;
+            final title = item
+                .findElements('title')
+                .first
+                .text;
+            final descriptionHtml = item
+                .findElements('description')
+                .first
+                .text;
+            final link = item
+                .findElements('link')
+                .first
+                .text;
 
-            final description = html_parser.parse(descriptionHtml).body?.text ?? '';
+            final description = html_parser
+                .parse(descriptionHtml)
+                .body
+                ?.text ?? '';
 
             // Look for image URL
             String? imageUrl;
-            final mediaContent = item.findElements('media:content').firstOrNull;
+            final mediaContent = item
+                .findElements('media:content')
+                .firstOrNull;
             if (mediaContent != null) {
               imageUrl = mediaContent.getAttribute('url');
             }
@@ -109,7 +126,7 @@ class _NewsScreenState extends State<NewsScreen2> with SingleTickerProviderState
               'preview': description,
               'fullContent': link,
               'channel': rssSources[url]!,
-              'imageUrl': imageUrl ?? '',  // Add imageUrl key with URL if found, else empty
+              'imageUrl': imageUrl ?? '',
             });
           }
         } else {
@@ -177,78 +194,85 @@ class _NewsScreenState extends State<NewsScreen2> with SingleTickerProviderState
             ),
             if (articles.isEmpty && errorMessage.isEmpty)
               Center(child: CircularProgressIndicator())
-            else if (articles.isEmpty)
-              Center(child: Text('Just a moment! We’re fetching the latest news stories...'))
             else
-              ListView.builder(
-                padding: const EdgeInsets.all(16.0),
-                itemCount: articles.length,
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                itemBuilder: (context, index) {
-                  final article = articles[index];
-                  return GestureDetector(
-                    onTap: () => _showArticle(context, article['fullContent']!),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(15.0),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 4.0,
-                            offset: Offset(2, 2),
-                          ),
-                        ],
-                      ),
-                      margin: const EdgeInsets.only(bottom: 16.0),
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (article['imageUrl']!.isNotEmpty)
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8.0),
-                              child: Image.network(
-                                article['imageUrl']!,
-                                height: 200,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
+              if (articles.isEmpty)
+                Center(child: Text(
+                    'Just a moment! We’re fetching the latest news stories...'))
+              else
+                ListView.builder(
+                  padding: const EdgeInsets.all(16.0),
+                  itemCount: articles.length,
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemBuilder: (context, index) {
+                    final article = articles[index];
+                    return GestureDetector(
+                      onTap: () =>
+                          _showArticle(context, article['fullContent']!),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 4.0,
+                              offset: Offset(2, 2),
+                            ),
+                          ],
+                        ),
+                        margin: const EdgeInsets.only(bottom: 16.0),
+                        padding: const EdgeInsets.all(12.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (article['imageUrl']!.isNotEmpty)
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8.0),
+                                child: Image.network(
+                                  article['imageUrl']!,
+                                  height: 200,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            SizedBox(height: 8.0),
+                            Text(
+                              article['channel']!,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blueAccent,
                               ),
                             ),
-                          SizedBox(height: 8.0),
-                          Text(
-                            article['channel']!,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blueAccent,
+                            SizedBox(height: 4.0),
+                            Text(
+                              article['title']!,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 4.0),
-                          Text(
-                            article['title']!,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
+                            SizedBox(height: 8.0),
+                            Text(
+                              article['preview']!,
+                              style: TextStyle(fontSize: 14),
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                          SizedBox(height: 8.0),
-                          Text(
-                            article['preview']!,
-                            style: TextStyle(fontSize: 14),
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                },
-              ),
+                    );
+                  },
+                ),
           ],
         ),
       ),
+      Center(child: Text('Dashboard - Coming Soon!')),
+      Center(child: Text('Offline Content - Coming Soon!')),
+      Center(child: Text('Documents - Coming Soon!')),
+      Center(child: Text('Profile - Coming Soon!')),
     ];
   }
 
@@ -270,58 +294,29 @@ class _NewsScreenState extends State<NewsScreen2> with SingleTickerProviderState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            color: Colors.white,
-          ),
-          Column(
-            children: [
-              Container(
-                color: Colors.blue,
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    Icon(Icons.newspaper, color: Colors.white),
-                    SizedBox(width: 8.0),
-                    Text(
-                      'Fori Feed',
-                      style: TextStyle(color: Colors.white, fontSize: 24),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(child: _widgetOptions(context)[_selectedIndex]),
-            ],
-          ),
-        ],
+      appBar: AppBar(
+        title: Text('Fori Feed'),
+        backgroundColor: Colors.blueAccent,
       ),
+      body: _widgetOptions(context)[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.newspaper),
-            label: 'News',
-          ),
+              icon: Icon(FontAwesomeIcons.newspaper), label: 'News'),
           BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.chartLine),
-            label: 'Dashboard',
-          ),
+              icon: Icon(FontAwesomeIcons.chartBar), label: 'Dashboard'),
           BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.wifi),
-            label: 'Offline',
-          ),
+              icon: Icon(FontAwesomeIcons.wifi), label: 'Offline'),
           BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.file),
-            label: 'Documents',
-          ),
+              icon: Icon(FontAwesomeIcons.fileAlt), label: 'Documents'),
           BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.user),
-            label: 'Profile',
-          ),
+              icon: Icon(FontAwesomeIcons.user), label: 'Profile'),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.blue,
-        unselectedItemColor: Colors.grey,
+        // Color for the selected icon
+        unselectedItemColor: Colors.blue,
+        // Color for the unselected icons
         onTap: _onItemTapped,
       ),
     );

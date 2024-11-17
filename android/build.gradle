@@ -7,7 +7,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:7.4.2' // Add the Android Gradle Plugin
-        classpath 'com.google.gms:google-services:4.4.2' // Google Services Gradle Plugin
+        classpath 'com.google.gms:google-services:4.3.15' // Google Services Gradle Plugin
         // Add any other classpath dependencies here if you have them
     }
 }
