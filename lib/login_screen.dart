@@ -1,7 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fori_feed/selection.dart';
 import 'signup_screen.dart';
-import 'news_screen2.dart'; // Import the NewsScreen2.dart
+//import 'news_screen2.dart'; // Import the NewsScreen2.dart
+import 'selection.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -47,7 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
       // Navigate to the News_screen2.dart after successful login
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => NewsScreen2()),
+        MaterialPageRoute(builder: (context) => SelectionScreen()),
       );
     } on FirebaseAuthException catch (e) {
       setState(() {

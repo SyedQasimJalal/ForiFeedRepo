@@ -24,6 +24,8 @@ dependencies:
   firebase_auth: ^5.1.2
   cloud_firestore: ^5.2.1
   firebase_database: ^11.1.6
+  flutter_tts: ^3.6.0
+
 
 
 
@@ -45,6 +47,31 @@ flutter:
   assets:
     - assets/animations/news.json
     - assets/icons.png
+    - assets/geonews.png
+    - assets/images/dawnnews.png
+    - assets/images/aljazeera.png
+    - assets/images/foxnews.png
+    - assets/images/googlenews.png
+    - assets/images/guardnews.jpg
+    - assets/images/cnnnews.png
+    - assets/images/bolnews.png
+    - assets/images/bbcnews.png
+    - assets/images/foxnews.png
+    - assets/images/arynews.jpg
+    - assets/images/asport.jpg
+    - assets/images/skynews.jpg
+    - assets/images/expresstribune.jpg
+    - assets/images/pktodaynews.jpg
+    - assets/images/mashriqnews.jpg
+    - assets/images/nytimesnews.png
+    - assets/images/humnews.jpg
+    - assets/images/gnnnews.jpg
+    - assets/images/abtaknews.jpg
+
+
+
+
+
 
 flutter_launcher_icons:
   android: true

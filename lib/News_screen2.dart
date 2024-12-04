@@ -3,9 +3,9 @@ import 'package:http/http.dart' as http;
 import 'package:xml/xml.dart' as xml;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:html/parser.dart' as html_parser;
-import 'article_screen.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
+import 'package:flutter_tts/flutter_tts.dart'; // Import TTS package
+import 'article_screen.dart'; // Ensure this file exists
+import 'firebase_service.dart'; // Import Firebase service class
 
 class NewsScreen2 extends StatefulWidget {
   @override
@@ -16,67 +16,61 @@ class _NewsScreenState extends State<NewsScreen2> with SingleTickerProviderState
   int _selectedIndex = 0;
   List<Map<String, String>> articles = [];
   String errorMessage = '';
-  bool _showWhatsNewPanel = false;
-  late AnimationController _controller;
-  late Animation<double> _panelAnimation;
-  late Animation<Offset> _textAnimation;
-  late Animation<double> _danceAnimation;
+  bool _isLoading = false; // Track loading state
+  late FlutterTts flutterTts;
+  bool isSpeaking = false; // Track if TTS is speaking
+
+  String _searchQuery = ""; // Store the search query
+  Map<String, String> sentimentVotes = {}; // Sentiment state for each article
+  List<String> followedChannels = []; // List to store followed channels
 
   @override
   void initState() {
     super.initState();
-    fetchNews();
-    _showWhatsNewPanelAfterDelay();
+    fetchFollowedChannels(); // Fetch followed channels from Firebase
+    flutterTts = FlutterTts();
+    flutterTts.setCompletionHandler(() {
+      setState(() {
+        isSpeaking = false;
+      });
+    });
+  }
 
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1000),
-      vsync: this,
-    );
-
-    _panelAnimation = Tween<double>(begin: -100.0, end: 0.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeInOut,
-      ),
-    );
-
-    _textAnimation =
-        Tween<Offset>(begin: Offset(-1.0, 0.0), end: Offset(0.0, 0.0)).animate(
-          CurvedAnimation(
-            parent: _controller,
-            curve: Interval(0.5, 1.0, curve: Curves.easeInOut),
-          ),
-        );
-
-    _danceAnimation = Tween<double>(begin: 0.9, end: 1.1).animate(
-        CurvedAnimation(
-          parent: _controller,
-          curve: Curves.elasticInOut,
-        ));
+  // Fetch the followed channels for the current user from Firebase
+  Future<void> fetchFollowedChannels() async {
+    try {
+      followedChannels = await FirebaseService().fetchFollowedChannels();
+      fetchNews(); // After fetching followed channels, fetch the news
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Error fetching followed channels: $e';
+      });
+    }
   }
 
   Future<void> fetchNews() async {
     Map<String, String> rssSources = {
-      'https://www.thenews.com.pk/rss/1': 'The News International',
-      'https://tribune.com.pk/rss': 'Express Tribune',
+      'https://www.thenews.com.pk/rss/1/10': 'The News International',
+      'https://tribune.com.pk/feed/latest': 'Express Tribune',
       'https://www.nation.com.pk/sitemap_news_google.xml': 'The Nation',
       'https://www.dawn.com/feed': 'Dawn',
-      'https://www.pakistantoday.com.pk/feed/': 'Pakistan Today',
-      'https://www.brecorder.com/rss': 'Business Recorder',
+      'https://www.pakistantoday.com.pk/category/national/feed/': 'Pakistan Today',
+      'https://www.brecorder.com/feeds/latest-news/': 'Business Recorder',
       'https://www.sundayguardianlive.com/feed': 'Sunday Guardian',
       'https://www.mashriqtv.pk/feed/': 'Mashriq TV',
       'https://www.24newshd.tv/feed': '24 News HD',
+      'https://abbtakk.tv/feed/': 'Ab Takk News',
+      'https://humnews.pk/latest/feed/': 'Hum News',
       'https://www.samaa.tv/feed/': 'Samaa',
       'https://arynews.tv/feed/': 'ARY News',
       'https://www.geo.tv/rss/1/53': 'Geo News',
-      'https://www.geo.tv/rss/1/1': 'Geo News',
-      'https://www.geo.tv/rss/1/4': 'Geo News',
-      'https://feeds.feedburner.com/geo/GiKR': 'Geo News',
       'https://www.bolnews.com/feed/': 'Bol News',
       'http://feeds.bbci.co.uk/news/rss.xml': 'BBC News',
       'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml': 'The New York Times',
-      'https://rss.cnn.com/rss/edition.rss': 'CNN',
+      //'https://rss.cnn.com/rss/edition.rss': 'CNN',
       'https://feeds.skynews.com/feeds/rss/world.xml': 'Sky News',
+    'https://feeds.skynews.com/feeds/rss/home.xml':'Sky News',
+      'https://gnnhd.tv/rss/latest': 'GNN',
       'https://feeds.foxnews.com/foxnews/latest': 'Fox News',
       'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en': 'Google News',
       'https://www.aljazeera.com/xml/rss/all.xml': 'Al Jazeera',
@@ -84,11 +78,32 @@ class _NewsScreenState extends State<NewsScreen2> with SingleTickerProviderState
       'https://www.theguardian.com/world/rss': 'The Guardian',
       'https://www.bbc.com/news/10628494': 'BBC Top Stories',
       'https://www.huffpost.com/section/front-page/feed': 'HuffPost',
+      'https://a-sports.tv/feed/': 'ASports',
+      'https://www.aaj.tv/feeds/latest-news/' : 'Aaj tv',
+      'https://www.independent.co.uk/asia/rss' : 'Independant',
+      'https://www.cbsnews.com/latest/rss/main' : 'CBS',
     };
 
-    for (String url in rssSources.keys) {
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Clear previous articles to avoid duplication
+    articles.clear();
+
+    for (String channel in followedChannels) {
+      // Find the RSS URL associated with the channel
+      String? rssUrl = rssSources.entries
+          .firstWhere(
+            (entry) => entry.value == channel,
+        orElse: () => MapEntry("", ""),
+      )
+          .key;
+
+      if (rssUrl.isEmpty) continue;
+
       try {
-        final response = await http.get(Uri.parse(url));
+        final response = await http.get(Uri.parse(rssUrl));
         if (response.statusCode == 200) {
           final document = xml.XmlDocument.parse(response.body);
           final items = document.findAllElements('item');
@@ -106,174 +121,53 @@ class _NewsScreenState extends State<NewsScreen2> with SingleTickerProviderState
                 .findElements('link')
                 .first
                 .text;
-
             final description = html_parser
                 .parse(descriptionHtml)
                 .body
                 ?.text ?? '';
 
-            // Look for image URL
-            String? imageUrl;
-            final mediaContent = item
-                .findElements('media:content')
-                .firstOrNull;
-            if (mediaContent != null) {
-              imageUrl = mediaContent.getAttribute('url');
-            }
-
             articles.add({
               'title': title,
               'preview': description,
               'fullContent': link,
-              'channel': rssSources[url]!,
-              'imageUrl': imageUrl ?? '',
+              'source': channel,
             });
           }
-        } else {
-          setState(() {
-            errorMessage = 'Failed to load from $url: ${response.statusCode}';
-          });
         }
       } catch (e) {
         setState(() {
-          errorMessage = 'Error fetching from $url: $e';
+          errorMessage = 'Error fetching news: $e';
         });
       }
     }
 
-    setState(() {});
-  }
-
-  void _showWhatsNewPanelAfterDelay() async {
-    await Future.delayed(Duration(seconds: 3));
     setState(() {
-      _showWhatsNewPanel = true;
-      _controller.forward();
+      _isLoading = false;
     });
   }
 
-  List<Widget> _widgetOptions(BuildContext context) {
-    return <Widget>[
-      SingleChildScrollView(
-        child: Column(
-          children: [
-            SlideTransition(
-              position: _textAnimation,
-              child: Container(
-                margin: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  color: Colors.blue,
-                  borderRadius: BorderRadius.circular(15.0),
-                ),
-                padding: const EdgeInsets.all(16.0),
-                height: 120.0,
-                child: Row(
-                  children: [
-                    ScaleTransition(
-                      scale: _danceAnimation,
-                      child: Icon(
-                        Icons.newspaper,
-                        color: Colors.white,
-                        size: 40,
-                      ),
-                    ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        "What's New...",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.normal,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            if (articles.isEmpty && errorMessage.isEmpty)
-              Center(child: CircularProgressIndicator())
-            else
-              if (articles.isEmpty)
-                Center(child: Text(
-                    'Just a moment! We’re fetching the latest news stories...'))
-              else
-                ListView.builder(
-                  padding: const EdgeInsets.all(16.0),
-                  itemCount: articles.length,
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    final article = articles[index];
-                    return GestureDetector(
-                      onTap: () =>
-                          _showArticle(context, article['fullContent']!),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(15.0),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black26,
-                              blurRadius: 4.0,
-                              offset: Offset(2, 2),
-                            ),
-                          ],
-                        ),
-                        margin: const EdgeInsets.only(bottom: 16.0),
-                        padding: const EdgeInsets.all(12.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (article['imageUrl']!.isNotEmpty)
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8.0),
-                                child: Image.network(
-                                  article['imageUrl']!,
-                                  height: 200,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            SizedBox(height: 8.0),
-                            Text(
-                              article['channel']!,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blueAccent,
-                              ),
-                            ),
-                            SizedBox(height: 4.0),
-                            Text(
-                              article['title']!,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                              ),
-                            ),
-                            SizedBox(height: 8.0),
-                            Text(
-                              article['preview']!,
-                              style: TextStyle(fontSize: 14),
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-          ],
-        ),
-      ),
-      Center(child: Text('Dashboard - Coming Soon!')),
-      Center(child: Text('Offline Content - Coming Soon!')),
-      Center(child: Text('Documents - Coming Soon!')),
-      Center(child: Text('Profile - Coming Soon!')),
-    ];
+  List<Map<String, String>> getFilteredArticles() {
+    if (_searchQuery.isEmpty) return articles;
+    return articles.where((article) {
+      return article['title']!.toLowerCase().contains(
+          _searchQuery.toLowerCase());
+    }).toList();
+  }
+
+  Future<void> _speak(String text) async {
+    if (isSpeaking) {
+      await flutterTts.stop();
+      setState(() {
+        isSpeaking = false;
+      });
+    } else {
+      if (text.isNotEmpty) {
+        await flutterTts.speak(text);
+        setState(() {
+          isSpeaking = true;
+        });
+      }
+    }
   }
 
   void _onItemTapped(int index) {
@@ -282,7 +176,10 @@ class _NewsScreenState extends State<NewsScreen2> with SingleTickerProviderState
     });
   }
 
-  void _showArticle(BuildContext context, String articleUrl) {
+  void _showArticle(BuildContext context, String articleUrl,
+      String articleTitle) async {
+    await FirebaseService().saveTappedArticle(
+        articleTitle, articleUrl); // Save article to Firestore
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -291,33 +188,118 @@ class _NewsScreenState extends State<NewsScreen2> with SingleTickerProviderState
     );
   }
 
+  List<Widget> _widgetOptions(BuildContext context) {
+    return <Widget>[
+      SingleChildScrollView(
+        child: Column(
+          children: [
+            // Search field at the top
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextField(
+                onChanged: (query) {
+                  setState(() {
+                    _searchQuery = query;
+                  });
+                },
+                decoration: InputDecoration(
+                  hintText: 'Search articles...',
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            // Loading state or news list
+            _isLoading
+                ? CircularProgressIndicator()
+                : ListView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              itemCount: getFilteredArticles().length,
+              itemBuilder: (context, index) {
+                final article = getFilteredArticles()[index];
+                return Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    elevation: 5,
+                    child: ListTile(
+                      contentPadding: EdgeInsets.all(10),
+                      title: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Channel name in blue and bold
+                          Text(
+                            article['source']!,
+                            style: TextStyle(
+                              color: Colors.blue,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          SizedBox(height: 5),
+                          // Space between channel name and title
+                          Text(
+                            article['title']!,
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      subtitle: Text(
+                        article['preview']!,
+                        maxLines: 5,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      onTap: () =>
+                          _showArticle(
+                            context,
+                            article['fullContent']!,
+                            article['title']!,
+                          ),
+                      trailing: IconButton(
+                        icon: Icon(
+                          isSpeaking ? Icons.stop : Icons.volume_up,
+                        ),
+                        onPressed: () => _speak(article['preview']!),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+      Center(child: Text('User Analytics')),
+      Center(child: Text('Non-Wifi News')),
+      Center(child: Text('Settings and Profile')),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Fori Feed'),
-        backgroundColor: Colors.blueAccent,
       ),
       body: _widgetOptions(context)[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
+        items: [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
-              icon: Icon(FontAwesomeIcons.newspaper), label: 'News'),
+              icon: Icon(Icons.analytics), label: 'User Analytics'),
           BottomNavigationBarItem(
-              icon: Icon(FontAwesomeIcons.chartBar), label: 'Dashboard'),
+              icon: Icon(Icons.wifi_off), label: 'Non-Wifi News'),
           BottomNavigationBarItem(
-              icon: Icon(FontAwesomeIcons.wifi), label: 'Offline'),
-          BottomNavigationBarItem(
-              icon: Icon(FontAwesomeIcons.fileAlt), label: 'Documents'),
-          BottomNavigationBarItem(
-              icon: Icon(FontAwesomeIcons.user), label: 'Profile'),
+              icon: Icon(Icons.settings), label: 'Settings'),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blue,
-        // Color for the selected icon
-        unselectedItemColor: Colors.blue,
-        // Color for the unselected icons
         onTap: _onItemTapped,
+        selectedItemColor: Colors.blue,
+        // Color for selected icon
+        unselectedItemColor: Colors.blue.shade400, // Color for unselected icon
       ),
     );
   }

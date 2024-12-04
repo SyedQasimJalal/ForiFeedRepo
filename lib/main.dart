@@ -2,6 +2,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:fori_feed/News_screen2.dart';
+import 'package:fori_feed/news_screen.dart';
+import 'package:fori_feed/selection.dart';
 import 'Home_page.dart';
 
 Future<void> main() async {
@@ -37,7 +39,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Fori Feed', // App Title
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: NewsScreen2(), // Home screen after initialization
+      home: HomePage(), // Home screen after initialization
     );
   }
 }
