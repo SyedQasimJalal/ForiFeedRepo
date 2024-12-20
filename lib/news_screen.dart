@@ -304,7 +304,7 @@ class _NewsScreenState extends State<NewsScreen2Test> with SingleTickerProviderS
                                   isSpeaking ? FontAwesomeIcons.pause : FontAwesomeIcons.volumeUp,
                                   color: Colors.blue,
                                 ),
-                                onPressed: () => _speak(article['title']!),
+                                onPressed: () => _speak(article['preview']!),
                               ),
                             ],
                           ),

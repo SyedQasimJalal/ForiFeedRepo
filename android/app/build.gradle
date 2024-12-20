@@ -1,4 +1,5 @@
-// android/app/build.gradle
+// Import the Properties class
+
 
 plugins {
     id "com.android.application"
@@ -29,6 +30,9 @@ android {
     }
 
     defaultConfig {
+        ndk {
+            abiFilters "arm64-v8a", "armeabi-v7a", "x86_64"
+        }
         applicationId = "com.example.fori_feed" // Your app's package name
         minSdkVersion 23 // Set minSdkVersion to 23 explicitly
         targetSdk = flutter.targetSdkVersion
@@ -47,5 +51,12 @@ flutter {
     source = "../.."
 }
 
-// You don't need to apply the plugin again as it's already declared above
-apply plugin: 'com.google.gms.google-services'  // This line must be added
+dependencies {
+    implementation platform('com.google.firebase:firebase-bom:32.7.1') // Firebase BOM (latest version)
+    implementation 'com.google.firebase:firebase-auth' // Firebase Authentication
+    implementation 'com.google.firebase:firebase-firestore' // Firebase Firestore
+    implementation 'com.google.android.gms:play-services-auth:21.1.1' // Google Play Services Auth
+    implementation 'org.tensorflow:tensorflow-lite:2.10.0'
+}
+
+apply plugin: 'com.google.gms.google-services' // This line must be added

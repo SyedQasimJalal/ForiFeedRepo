@@ -8,6 +8,9 @@ environment:
   sdk: '>=3.4.3 <4.0.0'
 
 dependencies:
+  url_launcher: ^6.2.5
+  tflite_flutter: ^0.9.0
+  flutter_inappwebview: ^6.0.0
   flutter:
     sdk: flutter
   font_awesome_flutter: ^10.2.1
@@ -27,13 +30,14 @@ dependencies:
   flutter_tts: ^3.6.0
 
 
-
+dependency_overrides:
+  collection: ^1.17.0
 
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^4.0.0
   flutter_launcher_icons: ^0.14.1
 
 flutter:
@@ -45,7 +49,9 @@ flutter:
         - asset: assets/Rye-Regular.ttf
 
   assets:
+    - assets/sentiment_model.tflite
     - assets/animations/news.json
+    - assets/animations/loading.json
     - assets/icons.png
     - assets/geonews.png
     - assets/images/dawnnews.png

@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:html/parser.dart' as html_parser;
+import 'package:http/http.dart' as http;
 
 class FirebaseService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -63,17 +65,122 @@ class FirebaseService {
   Future<void> saveTappedArticle(String articleTitle, String articleUrl) async {
     User? user = _auth.currentUser;
     if (user != null) {
+      String articleContent = await _fetchArticleContent(articleUrl);
       // Save the tapped article under the user's 'tappedArticles' sub-collection
       await _firestore.collection('users').doc(user.uid).collection('tappedArticles').add(
         {
           'title': articleTitle,
           'url': articleUrl,
+          'content': articleContent,
           'timestamp': FieldValue.serverTimestamp(),
         },
       );
     } else {
       throw Exception("No user is logged in");
     }
+  }
+
+// Function to save sentiment to Firestore
+  Future<void> saveSentiment(String sentiment, String articleTitle, String articleUrl) async {
+    User? user = _auth.currentUser;
+
+    if (user != null) {
+      try {
+        // Reference to the sentiment collection
+        final sentimentCollection = _firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('sentiment');
+
+        // Check if there's already a record for the article
+        final querySnapshot = await sentimentCollection
+            .where('articleTitle', isEqualTo: articleTitle)
+            .get();
+
+        if (querySnapshot.docs.isNotEmpty) {
+          // If an entry exists, update it
+          final docId = querySnapshot.docs.first.id;
+          await sentimentCollection.doc(docId).set({
+            'articleTitle': articleTitle,
+            'articleUrl': articleUrl,
+            'sentiment': sentiment,
+            'timestamp': FieldValue.serverTimestamp(),
+          });
+          print("Sentiment updated for article: $articleTitle");
+        } else {
+          // If no entry exists, create a new one
+          await sentimentCollection.add({
+            'articleTitle': articleTitle,
+            'articleUrl': articleUrl,
+            'sentiment': sentiment,
+            'timestamp': FieldValue.serverTimestamp(),
+          });
+          print("New sentiment saved for article: $articleTitle");
+        }
+      } catch (e) {
+        print("Error saving sentiment: $e");
+      }
+    } else {
+      print("Error: No user is logged in");
+    }
+  }
+
+  Future<void> saveComment(String userId, String articleTitle, String commentText) async {
+    User? user = _auth.currentUser;
+
+    if (user != null) {
+      try {
+        final userCommentsCollection = _firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('Comments');
+
+        final querySnapshot = await userCommentsCollection
+            .where('articleTitle', isEqualTo: articleTitle)
+            .get();
+
+        if (querySnapshot.docs.isNotEmpty) {
+          // Update the existing entry
+          final docId = querySnapshot.docs.first.id;
+          await userCommentsCollection.doc(docId).set({
+            'articleTitle': articleTitle,
+            'commentText': commentText,
+            'timestamp': FieldValue.serverTimestamp(),
+          });
+          print("Comment updated for article: $articleTitle");
+        } else {
+          // Create a new entry
+          await userCommentsCollection.add({
+            'articleTitle': articleTitle,
+            'commentText': commentText,
+            'timestamp': FieldValue.serverTimestamp(),
+          });
+          print("New comment saved for article: $articleTitle");
+        }
+      } catch (e) {
+        print("Error saving comment: $e");
+      }
+    } else {
+      print("Error: No user is logged in");
+    }
+  }
+
+
+// Dummy sentiment model function
+  Future<String> runSentimentModel(String text) async {
+    // Replace with actual model call
+    return 'positive'; // For example
+  }
+  Future<List<Map<String, dynamic>>> saveSentimentDynamic() async {
+    User? user = _auth.currentUser;
+    List<Map<String, dynamic>> sentiment = [];
+    if (user != null) {
+      QuerySnapshot snapshot = await _firestore.collection('users').doc(user.uid).collection('sentiment').get();
+      for (var doc in snapshot.docs) {
+        sentiment.add(doc.data() as Map<String, dynamic>);
+      }
+    }
+    return sentiment;
   }
 
   /// Fetches the tapped articles for the current user.
@@ -88,4 +195,38 @@ class FirebaseService {
     }
     return tappedArticles;
   }
+
+  Future<String> _fetchArticleContent(String url) async {
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        // Parse the HTML content of the article page
+        final document = html_parser.parse(response.body);
+
+        // Extract the article content using selectors (adjust based on website structure)
+        final articleElement = document.querySelector('article') ?? document.body;
+
+        if (articleElement != null) {
+          // Remove any unwanted tags like <script>, <style>, etc.
+          articleElement.querySelectorAll('script, style, noscript').forEach((element) => element.remove());
+
+          // Get the cleaned text content
+          String articleContent = articleElement.text;
+
+          // Replace multiple spaces or newlines with a single space
+          articleContent = articleContent.replaceAll(RegExp(r'\s+'), ' ').trim();
+
+          return articleContent;
+        } else {
+          return 'No article content found';
+        }
+      } else {
+        throw Exception("Failed to load article content (Status Code: ${response.statusCode})");
+      }
+    } catch (e) {
+      print('Error fetching article content: $e');
+      return 'Error fetching article content';
+    }
+    }
+
 }

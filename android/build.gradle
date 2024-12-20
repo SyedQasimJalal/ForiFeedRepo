@@ -1,6 +1,7 @@
 // android/build.gradle
 
 buildscript {
+    ext.kotlin_version = '1.9.24'
     repositories {
         google()          // Use Google's Maven repository
         mavenCentral()    // Use Maven Central repository
@@ -8,6 +9,7 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:7.4.2' // Add the Android Gradle Plugin
         classpath 'com.google.gms:google-services:4.3.15' // Google Services Gradle Plugin
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"// Add any other classpath dependencies here if you have them
         // Add any other classpath dependencies here if you have them
     }
 }
